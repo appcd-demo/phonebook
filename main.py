@@ -1,6 +1,7 @@
 import json
 import boto3
 from boto3.dynamodb.conditions import Key
+import uuid  # To generate unique ids
 
 
 dynamodb = boto3.resource('dynamodb')
@@ -21,12 +22,18 @@ def lambda_handler(event, context):
             'body': json.dumps('Invalid operation')
         }
 
+
 def add_contact(event):
+    # Generate a unique ID for each contact
+    contact_id = str(uuid.uuid4())  # Generates a random unique ID
+    
     name = event['name']
     phone_number = event['phone_number']
     
+    # Add the contact to DynamoDB with the 'id' field
     table.put_item(
         Item={
+            'id': contact_id,  # Primary key
             'Name': name,
             'PhoneNumber': phone_number
         }
@@ -36,6 +43,7 @@ def add_contact(event):
         'statusCode': 200,
         'body': json.dumps('Contact added successfully')
     }
+
 
 def get_contact(event):
     name = event['name']
