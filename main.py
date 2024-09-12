@@ -7,40 +7,31 @@ dynamodb = boto3.resource('dynamodb')
 table = dynamodb.Table('Phonebook')
 
 def lambda_handler(event, context):
-    # Enable CORS for the Function URL
-    headers = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET',
-        'Access-Control-Allow-Headers': 'Content-Type'
-    }
     
-    # Handle preflight requests (CORS)
-    if event['httpMethod'] == 'OPTIONS':
-        return {
-            'statusCode': 200,
-            'headers': headers,
-            'body': json.dumps('CORS preflight successful')
-        }
-    
-    print(event)
-    body = json.loads(event['body'])
-    operation = body['operation']
+    if 'body' in event: 
+        body = json.loads(event['body'])
+    else:  
+        body = json.loads(event.get('body', '{}'))  
+
+    operation = body.get('operation')
     
     if operation == 'add_contact':
-        return add_contact(body, headers)
+        return add_contact(body)
     elif operation == 'get_contact':
-        return get_contact(body, headers)
+        return get_contact(body)
     elif operation == 'delete_contact':
-        return delete_contact(body, headers)
+        return delete_contact(body)
     else:
         return {
             'statusCode': 400,
-            'headers': headers,
             'body': json.dumps('Invalid operation')
         }
 
-def add_contact(event, headers):
+
+def add_contact(event):
+   
     contact_id = str(uuid.uuid4())  # Generates a random unique ID
+    
     name = event['name']
     phone_number = event['phone_number']
     
@@ -55,11 +46,11 @@ def add_contact(event, headers):
     
     return {
         'statusCode': 200,
-        'headers': headers,
         'body': json.dumps('Contact added successfully')
     }
 
-def get_contact(event, headers):
+
+def get_contact(event):
     name = event['name']
     
     response = table.get_item(
@@ -71,17 +62,15 @@ def get_contact(event, headers):
     if 'Item' in response:
         return {
             'statusCode': 200,
-            'headers': headers,
             'body': json.dumps(response['Item'])
         }
     else:
         return {
             'statusCode': 404,
-            'headers': headers,
             'body': json.dumps('Contact not found')
         }
 
-def delete_contact(event, headers):
+def delete_contact(event):
     name = event['name']
     
     response = table.delete_item(
@@ -92,6 +81,5 @@ def delete_contact(event, headers):
     
     return {
         'statusCode': 200,
-        'headers': headers,
         'body': json.dumps('Contact deleted successfully')
     }
